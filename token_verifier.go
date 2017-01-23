@@ -14,6 +14,10 @@ const audience = "https://identitytoolkit.googleapis.com/google.identity.identit
 // defaultAcceptableExpSkew is the default expiry leeway.
 const defaultAcceptableExpSkew = 300 * time.Second
 
+// certsCache to store certificate and prevent to not load every time from internet
+// it need to implement cache timeout or use some Cache library (in-memory, memcache, redis)
+var certsCache = make(map[string]*Certificates)
+
 func verify(issuer, tokenString, clientCertURL string) (*Token, error) {
 	decodedJWT, err := jws.ParseJWT([]byte(tokenString))
 	if err != nil {
@@ -25,7 +29,14 @@ func verify(issuer, tokenString, clientCertURL string) (*Token, error) {
 	}
 
 	keys := func(j jws.JWS) ([]interface{}, error) {
-		certs := &Certificates{URL: clientCertURL}
+		var certs *Certificates
+		if item, ok := certsCache[clientCertURL]; ok {
+			certs = item
+		} else {
+			certs = &Certificates{URL: clientCertURL}
+			certsCache[clientCertURL] = certs
+		}
+
 		kid, ok := j.Protected().Get("kid").(string)
 		if !ok {
 			return nil, errors.New("Firebase Auth ID Token has no 'kid' claim")

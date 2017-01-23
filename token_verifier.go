@@ -9,8 +9,6 @@ import (
 	"github.com/SermoDigital/jose/jwt"
 )
 
-const audience = "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit"
-
 // defaultAcceptableExpSkew is the default expiry leeway.
 const defaultAcceptableExpSkew = 300 * time.Second
 
@@ -66,7 +64,7 @@ func verify(issuer, tokenString, clientCertURL string) (*Token, error) {
 func validator(issuer string) *jwt.Validator {
 	v := &jwt.Validator{}
 	v.EXP = defaultAcceptableExpSkew
-	v.SetAudience(audience)
+	v.SetAudience(firebaseAudience)
 	v.SetIssuer(issuer)
 	v.Fn = func(claims jwt.Claims) error {
 		subject, ok := claims.Subject()

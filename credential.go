@@ -16,6 +16,8 @@ type GoogleServiceAccountCredential struct {
 	PrivateKey *rsa.PrivateKey
 	// ClientEmail is the client email.
 	ClientEmail string
+	// Client x509 cert url
+	ClientCertURL string
 }
 
 // UnmarshalJSON is the custom unmarshaler for GoogleServiceAccountCredential.
@@ -25,6 +27,7 @@ func (c *GoogleServiceAccountCredential) UnmarshalJSON(data []byte) error {
 		ProjectID   string `json:"project_id"`
 		PrivateKey  string `json:"private_key"`
 		ClientEmail string `json:"client_email"`
+		ClientCertURL string `json:"client_x509_cert_url"`
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -38,6 +41,7 @@ func (c *GoogleServiceAccountCredential) UnmarshalJSON(data []byte) error {
 
 	c.ProjectID = aux.ProjectID
 	c.ClientEmail = aux.ClientEmail
+	c.ClientCertURL = aux.ClientCertURL
 	return nil
 }
 

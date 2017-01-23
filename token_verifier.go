@@ -2,7 +2,6 @@ package firebase
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/SermoDigital/jose/crypto"
@@ -10,14 +9,12 @@ import (
 	"github.com/SermoDigital/jose/jwt"
 )
 
-// clientCertURL is the URL containing the public keys for the Google certs
-// (whose private keys are used to sign Firebase Auth ID Tokens).
-const clientCertURL = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
+const audience = "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit"
 
 // defaultAcceptableExpSkew is the default expiry leeway.
 const defaultAcceptableExpSkew = 300 * time.Second
 
-func verify(projectID, tokenString string) (*Token, error) {
+func verify(issuer, tokenString, clientCertURL string) (*Token, error) {
 	decodedJWT, err := jws.ParseJWT([]byte(tokenString))
 	if err != nil {
 		return nil, err
@@ -46,21 +43,20 @@ func verify(projectID, tokenString string) (*Token, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	ks, _ := keys(decodedJWS)
 	key := ks[0]
-	if err := decodedJWT.Validate(key, crypto.SigningMethodRS256, validator(projectID)); err != nil {
+	if err := decodedJWT.Validate(key, crypto.SigningMethodRS256, validator(issuer)); err != nil {
 		return nil, err
 	}
 
 	return &Token{delegate: decodedJWT}, nil
 }
 
-func validator(projectID string) *jwt.Validator {
+func validator(issuer string) *jwt.Validator {
 	v := &jwt.Validator{}
 	v.EXP = defaultAcceptableExpSkew
-	v.SetAudience(projectID)
-	v.SetIssuer(fmt.Sprintf("https://securetoken.google.com/%s", projectID))
+	v.SetAudience(audience)
+	v.SetIssuer(issuer)
 	v.Fn = func(claims jwt.Claims) error {
 		subject, ok := claims.Subject()
 		if !ok || len(subject) == 0 || len(subject) > 128 {

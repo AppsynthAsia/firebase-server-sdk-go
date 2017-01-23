@@ -71,6 +71,7 @@ func (a *Auth) VerifyIDToken(tokenString string) (*Token, error) {
 	if err := a.app.options.ensureServiceAccount(); err != nil {
 		return nil, err
 	}
-	projectID := a.app.options.ServiceAccountCredential.ProjectID
-	return verify(projectID, tokenString)
+	issuer := a.app.options.ServiceAccountCredential.ClientEmail
+	clientCertURL := a.app.options.ServiceAccountCredential.ClientCertURL
+	return verify(issuer, tokenString, clientCertURL)
 }
